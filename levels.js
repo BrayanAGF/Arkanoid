@@ -14,4 +14,13 @@ const NIVELES = [
     'PPPPPPPPPP',
     'GGGGGGGGGG',
   ],
+  // Nivel 2 — 40 ladrillos
+  [
+    'RRRRRRRRRR',
+    'YYYYYYYYYY',
+    'CCCCCCCCCC',
+    'MMMMMMMMMM',
+    '..........',
+    '###.##.###',
+  ],
 ];

@@ -69,7 +69,7 @@ function crearLadrillos( mapa ) {
         h: LADRILLO_H,
         color,
         vivo: true,
-        indestructible: false,
+        indestructible: caracter === '#',
       } );
     }
   } );
@@ -172,7 +172,7 @@ function comprobarFinDeBola() {
   if ( bola.y > ALTO ) {
     estado.vidas--;
     estado.fase = estado.vidas > 0 ? 'saque' : 'derrota';
-  } else if ( !ladrillos.some( ( l ) => l.vivo ) ) {
+  } else if ( !ladrillos.some( ( l ) => l.vivo && !l.indestructible ) ) {
     estado.fase = 'victoria';
   }
 }
@@ -265,6 +265,12 @@ function chocarLadrillos() {
   } else {
     bola.vy = -bola.vy;
     bola.y += bolaArriba ? -solapeY : solapeY;
+  }
+
+  // Muro: rebota y suena, pero no se rompe ni da puntos
+  if ( l.indestructible ) {
+    reproducir( sonidoRebote );
+    return;
   }
 
   l.vivo = false;
