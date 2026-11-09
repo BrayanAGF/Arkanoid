@@ -287,7 +287,10 @@ function dibujarExplosiones() {
   for ( const ex of explosiones ) {
     const frames = EXPLOSION_FRAMES[ ex.color ];
     const indice = Math.min( frames.length - 1, Math.floor( ex.t / ( DURACION_EXPLOSION / 4 ) ) );
+    // EXPLOSION_FRAMES.gray apunta a los frames rojos: se desaturan con un filtro
+    if ( ex.color === 'gray' ) ctx.filter = 'grayscale(1)';
     drawFrame( ctx, frames[ indice ], ex.x, ex.y, ex.w, ex.h );
+    if ( ex.color === 'gray' ) ctx.filter = 'none';
   }
 }
 
