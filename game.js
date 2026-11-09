@@ -45,6 +45,20 @@ const particulas = [];
 // Sacudida en curso: t es el tiempo restante; dx/dy, el desplazamiento del frame actual
 const sacudida = { t: 0, dx: 0, dy: 0 };
 
+// Índice en NIVELES del nivel en juego. -1 antes de elegir el primero.
+let nivelActual = -1;
+
+// Elige un nivel al azar distinto del actual (si hay más de uno) y crea sus ladrillos
+function elegirNivel() {
+  let indice;
+  do {
+    indice = Math.floor( Math.random() * NIVELES.length );
+  } while ( NIVELES.length > 1 && indice === nivelActual );
+
+  nivelActual = indice;
+  crearLadrillos( NIVELES[ nivelActual ] );
+}
+
 // Crea los ladrillos a partir de un mapa de texto de levels.js (un carácter por celda)
 function crearLadrillos( mapa ) {
   ladrillos.length = 0;
@@ -159,7 +173,7 @@ function alternarPausa() {
 function reiniciarPartida() {
   estado.puntos = 0;
   estado.vidas = VIDAS_INICIALES;
-  crearLadrillos( NIVELES[ 0 ] );
+  elegirNivel();
   explosiones.length = 0;
   particulas.length = 0;
   sacudida.t = 0;
@@ -398,6 +412,8 @@ function dibujarHud() {
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
   ctx.fillText( 'Puntos: ' + estado.puntos, 16, ALTO_HUD / 2 );
+  ctx.textAlign = 'center';
+  ctx.fillText( 'Nivel ' + ( nivelActual + 1 ), ANCHO / 2, ALTO_HUD / 2 );
   ctx.textAlign = 'right';
 
   // Una bola por vida, alineadas a la derecha, con la etiqueta a su izquierda
@@ -455,7 +471,7 @@ function bucle( ahora ) {
   requestAnimationFrame( bucle );
 }
 
-crearLadrillos( NIVELES[ 0 ] );
+elegirNivel();
 colocarBolaEnPala();
 
 loadSpritesheet( () => {
