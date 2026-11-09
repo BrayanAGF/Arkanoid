@@ -11,16 +11,16 @@ const VEL_BOLA = 360; // px/s, constante toda la partida
 const ANGULO_SAQUE = Math.PI / 6; // 30° a la derecha respecto a la vertical
 const ANGULO_MAX = Math.PI / 3; // 60° respecto a la vertical
 const ALTO_HUD = 60; // franja superior del HUD; la pared superior está en su borde
-const COLORES_FILAS = [ 'red', 'yellow', 'cyan', 'magenta', 'hotpink', 'green', 'gray' ];
 
-// Cuadrícula de ladrillos: 7 filas × 10 columnas de 40×20, desde (40, 80)
+// Cuadrícula de ladrillos: hasta 12 filas × 10 columnas de 40×20, desde (40, 80) (spec 03)
 const COLUMNAS = 10;
+const FILAS_MAX = 12;
 const LADRILLO_W = 40;
 const LADRILLO_H = 20;
 const REJILLA_X = 40;
 const REJILLA_Y = 80;
 
-// 70 ladrillos: { x, y, w, h, color, vivo }
+// Ladrillos del nivel en juego: { x, y, w, h, color, vivo, indestructible }
 const ladrillos = [];
 
 // Efectos de rotura (spec 02)
@@ -44,10 +44,24 @@ const particulas = [];
 // Sacudida en curso: t es el tiempo restante; dx/dy, el desplazamiento del frame actual
 const sacudida = { t: 0, dx: 0, dy: 0 };
 
-function crearLadrillos() {
+// Crea los ladrillos a partir de un mapa de texto de levels.js (un carácter por celda)
+function crearLadrillos( mapa ) {
   ladrillos.length = 0;
-  COLORES_FILAS.forEach( ( color, fila ) => {
-    for ( let col = 0; col < COLUMNAS; col++ ) {
+  if ( mapa.length > FILAS_MAX ) console.warn( 'Mapa con más de ' + FILAS_MAX + ' filas; se ignoran las sobrantes' );
+
+  mapa.slice( 0, FILAS_MAX ).forEach( ( filaTexto, fila ) => {
+    if ( filaTexto.length > COLUMNAS ) console.warn( 'Fila ' + fila + ' con más de ' + COLUMNAS + ' columnas; se ignoran las sobrantes' );
+
+    for ( let col = 0; col < Math.min( filaTexto.length, COLUMNAS ); col++ ) {
+      const caracter = filaTexto[ col ];
+      if ( caracter === '.' ) continue;
+
+      const color = LEYENDA[ caracter ];
+      if ( !color ) {
+        console.warn( 'Carácter desconocido "' + caracter + '" en fila ' + fila + ', columna ' + col + '; se deja vacía' );
+        continue;
+      }
+
       ladrillos.push( {
         x: REJILLA_X + col * LADRILLO_W,
         y: REJILLA_Y + fila * LADRILLO_H,
@@ -55,6 +69,7 @@ function crearLadrillos() {
         h: LADRILLO_H,
         color,
         vivo: true,
+        indestructible: false,
       } );
     }
   } );
@@ -143,7 +158,7 @@ function alternarPausa() {
 function reiniciarPartida() {
   estado.puntos = 0;
   estado.vidas = VIDAS_INICIALES;
-  crearLadrillos();
+  crearLadrillos( NIVELES[ 0 ] );
   explosiones.length = 0;
   particulas.length = 0;
   sacudida.t = 0;
@@ -432,7 +447,7 @@ function bucle( ahora ) {
   requestAnimationFrame( bucle );
 }
 
-crearLadrillos();
+crearLadrillos( NIVELES[ 0 ] );
 colocarBolaEnPala();
 
 loadSpritesheet( () => {
