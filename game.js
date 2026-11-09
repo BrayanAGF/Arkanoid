@@ -26,8 +26,18 @@ const ladrillos = [];
 // Efectos de rotura (spec 02)
 const DURACION_EXPLOSION = 0.32; // s, total de los 4 frames
 
+const PARTICULAS_POR_LADRILLO = 8;
+const TAM_PARTICULA = 3; // px
+const VEL_PARTICULA_MIN = 60; // px/s
+const VEL_PARTICULA_MAX = 180; // px/s
+const GRAVEDAD_PARTICULA = 600; // px/s²
+const VIDA_PARTICULA = 0.5; // s
+
 // Explosiones en curso: { x, y, w, h, color, t } — t en segundos de juego transcurridos
 const explosiones = [];
+
+// Partículas en curso: { x, y, vx, vy, color, t } — color es un nombre CSS válido
+const particulas = [];
 
 function crearLadrillos() {
   ladrillos.length = 0;
@@ -130,6 +140,7 @@ function reiniciarPartida() {
   estado.vidas = VIDAS_INICIALES;
   crearLadrillos();
   explosiones.length = 0;
+  particulas.length = 0;
   estado.fase = 'saque';
 }
 
@@ -235,6 +246,7 @@ function chocarLadrillos() {
 
   l.vivo = false;
   explosiones.push( { x: l.x, y: l.y, w: l.w, h: l.h, color: l.color, t: 0 } );
+  crearParticulas( l );
   estado.puntos += PUNTOS_LADRILLO;
   reproducir( sonidoRotura );
 }
@@ -267,6 +279,7 @@ function dibujar() {
   }
 
   dibujarExplosiones();
+  dibujarParticulas();
 
   drawSprite( ctx, 'paddle', pala.x, pala.y, pala.w, pala.h );
   drawSprite( ctx, 'ball', bola.x, bola.y, bola.w, bola.h );
@@ -275,12 +288,50 @@ function dibujar() {
   dibujarMensaje();
 }
 
+// Partículas desde el centro del ladrillo, con dirección y velocidad aleatorias
+function crearParticulas( l ) {
+  for ( let i = 0; i < PARTICULAS_POR_LADRILLO; i++ ) {
+    const angulo = Math.random() * Math.PI * 2;
+    const vel = VEL_PARTICULA_MIN + Math.random() * ( VEL_PARTICULA_MAX - VEL_PARTICULA_MIN );
+    particulas.push( {
+      x: l.x + l.w / 2 - TAM_PARTICULA / 2,
+      y: l.y + l.h / 2 - TAM_PARTICULA / 2,
+      vx: Math.cos( angulo ) * vel,
+      vy: Math.sin( angulo ) * vel,
+      color: l.color,
+      t: 0,
+    } );
+  }
+}
+
 // Avanza los efectos con el tiempo de juego; no se llama en pausa
 function actualizarEfectos( dt ) {
   for ( let i = explosiones.length - 1; i >= 0; i-- ) {
     explosiones[ i ].t += dt;
     if ( explosiones[ i ].t >= DURACION_EXPLOSION ) explosiones.splice( i, 1 );
   }
+
+  for ( let i = particulas.length - 1; i >= 0; i-- ) {
+    const p = particulas[ i ];
+    p.t += dt;
+    if ( p.t >= VIDA_PARTICULA ) {
+      particulas.splice( i, 1 );
+      continue;
+    }
+    p.vy += GRAVEDAD_PARTICULA * dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+  }
+}
+
+// La opacidad baja de 1 a 0 a lo largo de la vida de la partícula
+function dibujarParticulas() {
+  for ( const p of particulas ) {
+    ctx.globalAlpha = 1 - p.t / VIDA_PARTICULA;
+    ctx.fillStyle = p.color;
+    ctx.fillRect( p.x, p.y, TAM_PARTICULA, TAM_PARTICULA );
+  }
+  ctx.globalAlpha = 1;
 }
 
 function dibujarExplosiones() {
