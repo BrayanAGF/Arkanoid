@@ -1,6 +1,6 @@
 # SPEC 03 — Niveles aleatorios con muros indestructibles
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01, SPEC 02
 > **Fecha:** 2026-11-09
 > **Objetivo:** Que cada partida nueva cargue al azar uno de 5 niveles diseñados a mano, con muros de bloques indestructibles que hacen de obstáculo para llegar a los ladrillos rompibles.
