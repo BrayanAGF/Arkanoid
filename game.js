@@ -49,6 +49,16 @@ const estado = {
 const pala = { x: 192, y: 600, w: 96, h: 14 };
 const bola = { x: 0, y: 0, w: 12, h: 12, vx: 0, vy: 0 };
 
+// Sonidos
+const sonidoRebote = new Audio( 'assets/sounds/ball-bounce.mp3' );
+const sonidoRotura = new Audio( 'assets/sounds/break-sound.mp3' );
+
+// Reinicia el sonido y lo reproduce. Si el navegador lo bloquea, el juego sigue sin sonido.
+function reproducir( sonido ) {
+  sonido.currentTime = 0;
+  sonido.play().catch( () => {} );
+}
+
 // Fase a la que se vuelve al salir de la pausa ('saque' o 'jugando')
 let faseAntesDePausa = 'saque';
 
@@ -172,13 +182,16 @@ function moverBola( dt ) {
   if ( bola.x < 0 ) {
     bola.x = 0;
     bola.vx = Math.abs( bola.vx );
+    reproducir( sonidoRebote );
   } else if ( bola.x + bola.w > ANCHO ) {
     bola.x = ANCHO - bola.w;
     bola.vx = -Math.abs( bola.vx );
+    reproducir( sonidoRebote );
   }
   if ( bola.y < ALTO_HUD ) {
     bola.y = ALTO_HUD;
     bola.vy = Math.abs( bola.vy );
+    reproducir( sonidoRebote );
   }
 
   // Pala: solo si la bola baja, con ángulo según el punto de impacto
@@ -190,6 +203,7 @@ function moverBola( dt ) {
     bola.vx = VEL_BOLA * Math.sin( angulo );
     bola.vy = -VEL_BOLA * Math.cos( angulo );
     bola.y = pala.y - bola.h;
+    reproducir( sonidoRebote );
   }
 }
 
@@ -214,6 +228,7 @@ function chocarLadrillos() {
 
   l.vivo = false;
   estado.puntos += PUNTOS_LADRILLO;
+  reproducir( sonidoRotura );
 }
 
 // Intersección AABB entre dos rectángulos { x, y, w, h }
