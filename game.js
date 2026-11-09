@@ -23,7 +23,10 @@ const REJILLA_Y = 80;
 // 70 ladrillos: { x, y, w, h, color, vivo }
 const ladrillos = [];
 
-// Explosiones en curso: { x, y, w, h, color, inicio } — inicio en ms (performance.now)
+// Efectos de rotura (spec 02)
+const DURACION_EXPLOSION = 0.32; // s, total de los 4 frames
+
+// Explosiones en curso: { x, y, w, h, color, t } — t en segundos de juego transcurridos
 const explosiones = [];
 
 function crearLadrillos() {
@@ -126,6 +129,7 @@ function reiniciarPartida() {
   estado.puntos = 0;
   estado.vidas = VIDAS_INICIALES;
   crearLadrillos();
+  explosiones.length = 0;
   estado.fase = 'saque';
 }
 
@@ -230,7 +234,7 @@ function chocarLadrillos() {
   }
 
   l.vivo = false;
-  explosiones.push( { x: l.x, y: l.y, w: l.w, h: l.h, color: l.color, inicio: performance.now() } );
+  explosiones.push( { x: l.x, y: l.y, w: l.w, h: l.h, color: l.color, t: 0 } );
   estado.puntos += PUNTOS_LADRILLO;
   reproducir( sonidoRotura );
 }
@@ -271,18 +275,18 @@ function dibujar() {
   dibujarMensaje();
 }
 
-// EXPLOSION_DURATION es la duración total de los 4 frames
-function dibujarExplosiones() {
-  const ahora = performance.now();
+// Avanza los efectos con el tiempo de juego; no se llama en pausa
+function actualizarEfectos( dt ) {
   for ( let i = explosiones.length - 1; i >= 0; i-- ) {
-    const ex = explosiones[ i ];
-    const transcurrido = ahora - ex.inicio;
-    if ( transcurrido > EXPLOSION_DURATION ) {
-      explosiones.splice( i, 1 );
-      continue;
-    }
+    explosiones[ i ].t += dt;
+    if ( explosiones[ i ].t >= DURACION_EXPLOSION ) explosiones.splice( i, 1 );
+  }
+}
+
+function dibujarExplosiones() {
+  for ( const ex of explosiones ) {
     const frames = EXPLOSION_FRAMES[ ex.color ];
-    const indice = Math.min( frames.length - 1, Math.floor( transcurrido / ( EXPLOSION_DURATION / 4 ) ) );
+    const indice = Math.min( frames.length - 1, Math.floor( ex.t / ( DURACION_EXPLOSION / 4 ) ) );
     drawFrame( ctx, frames[ indice ], ex.x, ex.y, ex.w, ex.h );
   }
 }
@@ -345,6 +349,7 @@ function bucle( ahora ) {
   ultimoTiempo = ahora;
 
   actualizar( dt );
+  if ( estado.fase !== 'pausa' ) actualizarEfectos( dt );
   dibujar();
 
   requestAnimationFrame( bucle );
