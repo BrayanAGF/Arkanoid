@@ -41,15 +41,21 @@ function crearLadrillos() {
 
 // Estado de la partida
 const estado = {
-  // 'inicio' | 'saque' | 'jugando' | 'pausa' | 'derrota' | 'victoria'
-  // Provisional: empieza en 'saque' hasta que el Paso 8 añada la pantalla de inicio.
-  fase: 'saque',
+  fase: 'inicio', // 'inicio' | 'saque' | 'jugando' | 'pausa' | 'derrota' | 'victoria'
   puntos: 0,
   vidas: VIDAS_INICIALES,
 };
 
 const pala = { x: 192, y: 600, w: 96, h: 14 };
 const bola = { x: 0, y: 0, w: 12, h: 12, vx: 0, vy: 0 };
+
+// Fase a la que se vuelve al salir de la pausa ('saque' o 'jugando')
+let faseAntesDePausa = 'saque';
+
+// La pala y la bola solo se mueven en estas fases
+function faseActiva() {
+  return estado.fase === 'saque' || estado.fase === 'jugando';
+}
 
 // Entrada
 const teclas = { izquierda: false, derecha: false };
@@ -77,6 +83,9 @@ document.addEventListener( 'keydown', ( e ) => {
     e.preventDefault();
     if ( !e.repeat ) accionPrincipal();
   }
+  if ( ( e.key === 'p' || e.key === 'P' || e.key === 'Escape' ) && !e.repeat ) {
+    alternarPausa();
+  }
 } );
 
 canvas.addEventListener( 'click', () => {
@@ -85,8 +94,19 @@ canvas.addEventListener( 'click', () => {
 
 // Espacio: acción según la fase actual
 function accionPrincipal() {
-  if ( estado.fase === 'saque' ) lanzarBola();
+  if ( estado.fase === 'inicio' ) estado.fase = 'saque';
+  else if ( estado.fase === 'saque' ) lanzarBola();
   else if ( estado.fase === 'derrota' || estado.fase === 'victoria' ) reiniciarPartida();
+}
+
+// P o Esc: 'jugando'/'saque' ↔ 'pausa'
+function alternarPausa() {
+  if ( faseActiva() ) {
+    faseAntesDePausa = estado.fase;
+    estado.fase = 'pausa';
+  } else if ( estado.fase === 'pausa' ) {
+    estado.fase = faseAntesDePausa;
+  }
 }
 
 function reiniciarPartida() {
@@ -113,6 +133,7 @@ document.addEventListener( 'keyup', ( e ) => {
 
 // El ratón centra la pala en su posición, convertida a unidades lógicas
 canvas.addEventListener( 'mousemove', ( e ) => {
+  if ( !faseActiva() ) return;
   const rect = canvas.getBoundingClientRect();
   const ratonX = ( e.clientX - rect.left ) * ( ANCHO / rect.width );
   pala.x = ratonX - pala.w / 2;
@@ -204,6 +225,8 @@ function solapan( a, b ) {
 let ultimoTiempo = 0;
 
 function actualizar( dt ) {
+  if ( !faseActiva() ) return; // congelado en inicio, pausa, derrota y victoria
+
   moverPala( dt );
   if ( estado.fase === 'saque' ) colocarBolaEnPala();
   else if ( estado.fase === 'jugando' ) {
@@ -222,6 +245,52 @@ function dibujar() {
 
   drawSprite( ctx, 'paddle', pala.x, pala.y, pala.w, pala.h );
   drawSprite( ctx, 'ball', bola.x, bola.y, bola.w, bola.h );
+
+  dibujarHud();
+  dibujarMensaje();
+}
+
+// Puntos y vidas en la franja superior (y < ALTO_HUD)
+function dibujarHud() {
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 20px monospace';
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  ctx.fillText( 'Puntos: ' + estado.puntos, 16, ALTO_HUD / 2 );
+  ctx.textAlign = 'right';
+  ctx.fillText( 'Vidas: ' + estado.vidas, ANCHO - 16, ALTO_HUD / 2 );
+
+  // Línea de la pared superior
+  ctx.fillStyle = '#444';
+  ctx.fillRect( 0, ALTO_HUD - 2, ANCHO, 2 );
+}
+
+const MENSAJES = {
+  inicio: { titulo: '', instruccion: 'Pulsa Espacio para empezar' },
+  pausa: { titulo: 'PAUSA', instruccion: 'Pulsa P o Esc para continuar' },
+  derrota: { titulo: 'GAME OVER', instruccion: 'Pulsa Espacio para reiniciar' },
+  victoria: { titulo: '¡VICTORIA!', instruccion: 'Pulsa Espacio para reiniciar' },
+};
+
+function dibujarMensaje() {
+  const mensaje = MENSAJES[ estado.fase ];
+  if ( !mensaje ) return;
+
+  const centroY = ALTO / 2 + 60;
+
+  // Fondo semitransparente detrás del texto
+  ctx.fillStyle = 'rgba( 0, 0, 0, 0.7 )';
+  ctx.fillRect( 0, centroY - 60, ANCHO, 120 );
+
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  if ( mensaje.titulo ) {
+    ctx.font = 'bold 40px monospace';
+    ctx.fillText( mensaje.titulo, ANCHO / 2, centroY - 18 );
+  }
+  ctx.font = '18px monospace';
+  ctx.fillText( mensaje.instruccion, ANCHO / 2, mensaje.titulo ? centroY + 26 : centroY );
 }
 
 function bucle( ahora ) {
