@@ -1,6 +1,6 @@
 # SPEC 02 — Efectos de rotura de ladrillos
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01
 > **Fecha:** 2026-11-09
 > **Objetivo:** Que romper un ladrillo se vea con una explosión más visible y con partículas y una breve sacudida de pantalla, todo congelado en pausa.

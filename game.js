@@ -32,12 +32,17 @@ const VEL_PARTICULA_MIN = 60; // px/s
 const VEL_PARTICULA_MAX = 180; // px/s
 const GRAVEDAD_PARTICULA = 600; // px/s²
 const VIDA_PARTICULA = 0.5; // s
+const SACUDIDA_MAX = 3; // px
+const DURACION_SACUDIDA = 0.12; // s
 
 // Explosiones en curso: { x, y, w, h, color, t } — t en segundos de juego transcurridos
 const explosiones = [];
 
 // Partículas en curso: { x, y, vx, vy, color, t } — color es un nombre CSS válido
 const particulas = [];
+
+// Sacudida en curso: t es el tiempo restante; dx/dy, el desplazamiento del frame actual
+const sacudida = { t: 0, dx: 0, dy: 0 };
 
 function crearLadrillos() {
   ladrillos.length = 0;
@@ -141,6 +146,9 @@ function reiniciarPartida() {
   crearLadrillos();
   explosiones.length = 0;
   particulas.length = 0;
+  sacudida.t = 0;
+  sacudida.dx = 0;
+  sacudida.dy = 0;
   estado.fase = 'saque';
 }
 
@@ -247,6 +255,7 @@ function chocarLadrillos() {
   l.vivo = false;
   explosiones.push( { x: l.x, y: l.y, w: l.w, h: l.h, color: l.color, t: 0 } );
   crearParticulas( l );
+  sacudida.t = DURACION_SACUDIDA; // se reinicia, no se acumula
   estado.puntos += PUNTOS_LADRILLO;
   reproducir( sonidoRotura );
 }
@@ -274,6 +283,10 @@ function actualizar( dt ) {
 function dibujar() {
   ctx.clearRect( 0, 0, ANCHO, ALTO );
 
+  // El campo de juego tiembla; el HUD y los mensajes, no
+  ctx.save();
+  ctx.translate( sacudida.dx, sacudida.dy );
+
   for ( const l of ladrillos ) {
     if ( l.vivo ) drawSprite( ctx, 'block_' + l.color, l.x, l.y, l.w, l.h );
   }
@@ -283,6 +296,8 @@ function dibujar() {
 
   drawSprite( ctx, 'paddle', pala.x, pala.y, pala.w, pala.h );
   drawSprite( ctx, 'ball', bola.x, bola.y, bola.w, bola.h );
+
+  ctx.restore();
 
   dibujarHud();
   dibujarMensaje();
@@ -321,6 +336,14 @@ function actualizarEfectos( dt ) {
     p.vy += GRAVEDAD_PARTICULA * dt;
     p.x += p.vx * dt;
     p.y += p.vy * dt;
+  }
+
+  // dx/dy solo cambian aquí, así la imagen no tiembla en pausa
+  if ( sacudida.t > 0 ) {
+    sacudida.t = Math.max( 0, sacudida.t - dt );
+    const amplitud = SACUDIDA_MAX * sacudida.t / DURACION_SACUDIDA;
+    sacudida.dx = ( Math.random() * 2 - 1 ) * amplitud;
+    sacudida.dy = ( Math.random() * 2 - 1 ) * amplitud;
   }
 }
 
