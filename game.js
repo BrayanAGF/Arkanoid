@@ -295,7 +295,16 @@ function dibujarHud() {
   ctx.textAlign = 'left';
   ctx.fillText( 'Puntos: ' + estado.puntos, 16, ALTO_HUD / 2 );
   ctx.textAlign = 'right';
-  ctx.fillText( 'Vidas: ' + estado.vidas, ANCHO - 16, ALTO_HUD / 2 );
+
+  // Una bola por vida, alineadas a la derecha, con la etiqueta a su izquierda
+  const TAM_ICONO = 16;
+  const SEP_ICONO = 6;
+  let x = ANCHO - 16 - TAM_ICONO;
+  for ( let i = 0; i < estado.vidas; i++ ) {
+    drawSprite( ctx, 'ball', x, ( ALTO_HUD - TAM_ICONO ) / 2, TAM_ICONO, TAM_ICONO );
+    x -= TAM_ICONO + SEP_ICONO;
+  }
+  ctx.fillText( 'Vidas:', x + TAM_ICONO, ALTO_HUD / 2 );
 
   // Línea de la pared superior
   ctx.fillStyle = '#444';
