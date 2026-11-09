@@ -27,6 +27,7 @@ const ladrillos = [];
 const DURACION_EXPLOSION = 0.32; // s, total de los 4 frames
 
 const PARTICULAS_POR_LADRILLO = 8;
+const CHISPAS_MURO = 4; // partículas grises al golpear un muro (spec 03)
 const TAM_PARTICULA = 3; // px
 const VEL_PARTICULA_MIN = 60; // px/s
 const VEL_PARTICULA_MAX = 180; // px/s
@@ -267,15 +268,16 @@ function chocarLadrillos() {
     bola.y += bolaArriba ? -solapeY : solapeY;
   }
 
-  // Muro: rebota y suena, pero no se rompe ni da puntos
+  // Muro: rebota, suena y saca chispas desde la bola, pero no se rompe ni da puntos
   if ( l.indestructible ) {
+    crearParticulas( bola.x + bola.w / 2, bola.y + bola.h / 2, 'gray', CHISPAS_MURO );
     reproducir( sonidoRebote );
     return;
   }
 
   l.vivo = false;
   explosiones.push( { x: l.x, y: l.y, w: l.w, h: l.h, color: l.color, t: 0 } );
-  crearParticulas( l );
+  crearParticulas( l.x + l.w / 2, l.y + l.h / 2, l.color, PARTICULAS_POR_LADRILLO );
   sacudida.t = DURACION_SACUDIDA; // se reinicia, no se acumula
   estado.puntos += PUNTOS_LADRILLO;
   reproducir( sonidoRotura );
@@ -324,17 +326,17 @@ function dibujar() {
   dibujarMensaje();
 }
 
-// Partículas desde el centro del ladrillo, con dirección y velocidad aleatorias
-function crearParticulas( l ) {
-  for ( let i = 0; i < PARTICULAS_POR_LADRILLO; i++ ) {
+// Partículas centradas en (cx, cy), con dirección y velocidad aleatorias
+function crearParticulas( cx, cy, color, cantidad ) {
+  for ( let i = 0; i < cantidad; i++ ) {
     const angulo = Math.random() * Math.PI * 2;
     const vel = VEL_PARTICULA_MIN + Math.random() * ( VEL_PARTICULA_MAX - VEL_PARTICULA_MIN );
     particulas.push( {
-      x: l.x + l.w / 2 - TAM_PARTICULA / 2,
-      y: l.y + l.h / 2 - TAM_PARTICULA / 2,
+      x: cx - TAM_PARTICULA / 2,
+      y: cy - TAM_PARTICULA / 2,
       vx: Math.cos( angulo ) * vel,
       vy: Math.sin( angulo ) * vel,
-      color: l.color,
+      color,
       t: 0,
     } );
   }
