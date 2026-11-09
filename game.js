@@ -23,6 +23,9 @@ const REJILLA_Y = 80;
 // 70 ladrillos: { x, y, w, h, color, vivo }
 const ladrillos = [];
 
+// Explosiones en curso: { x, y, w, h, color, inicio } — inicio en ms (performance.now)
+const explosiones = [];
+
 function crearLadrillos() {
   ladrillos.length = 0;
   COLORES_FILAS.forEach( ( color, fila ) => {
@@ -227,6 +230,7 @@ function chocarLadrillos() {
   }
 
   l.vivo = false;
+  explosiones.push( { x: l.x, y: l.y, w: l.w, h: l.h, color: l.color, inicio: performance.now() } );
   estado.puntos += PUNTOS_LADRILLO;
   reproducir( sonidoRotura );
 }
@@ -258,11 +262,29 @@ function dibujar() {
     if ( l.vivo ) drawSprite( ctx, 'block_' + l.color, l.x, l.y, l.w, l.h );
   }
 
+  dibujarExplosiones();
+
   drawSprite( ctx, 'paddle', pala.x, pala.y, pala.w, pala.h );
   drawSprite( ctx, 'ball', bola.x, bola.y, bola.w, bola.h );
 
   dibujarHud();
   dibujarMensaje();
+}
+
+// EXPLOSION_DURATION es la duración total de los 4 frames
+function dibujarExplosiones() {
+  const ahora = performance.now();
+  for ( let i = explosiones.length - 1; i >= 0; i-- ) {
+    const ex = explosiones[ i ];
+    const transcurrido = ahora - ex.inicio;
+    if ( transcurrido > EXPLOSION_DURATION ) {
+      explosiones.splice( i, 1 );
+      continue;
+    }
+    const frames = EXPLOSION_FRAMES[ ex.color ];
+    const indice = Math.min( frames.length - 1, Math.floor( transcurrido / ( EXPLOSION_DURATION / 4 ) ) );
+    drawFrame( ctx, frames[ indice ], ex.x, ex.y, ex.w, ex.h );
+  }
 }
 
 // Puntos y vidas en la franja superior (y < ALTO_HUD)
