@@ -23,4 +23,33 @@ const NIVELES = [
     '..........',
     '###.##.###',
   ],
+  // Nivel 3 — 35 ladrillos
+  [
+    'RR#YY#CC#M',
+    'RR#YY#CC#M',
+    'RR#YY#CC#M',
+    'RR#YY#CC#M',
+    'PP.GG.PP.G',
+  ],
+  // Nivel 4 — 32 ladrillos
+  [
+    'YYYYYYYYYY',
+    '.########.',
+    '.#MMMMMM#.',
+    '.#PPPPPP#.',
+    '.#GGGGGG#.',
+    '.###..###.',
+    '..........',
+    'CC......CC',
+  ],
+  // Nivel 5 — 40 ladrillos
+  [
+    'RRRRRRRRRR',
+    '####......',
+    'YYYYYYYYYY',
+    '......####',
+    'CCCCCCCCCC',
+    '####......',
+    'MMMMMMMMMM',
+  ],
 ];
